@@ -168,6 +168,7 @@
             var label = labels.get(labelId);
 
             el.onmousedown = dragMouseDown;
+            el.ontouchstart = dragMouseDown;
 
             function dragMouseDown(e) {
                 e = e || window.event;
@@ -176,6 +177,8 @@
                 startY = e.clientY;
                 document.onmouseup = closeDragElement;
                 document.onmousemove = elementDrag;
+                document.ontouchend = closeDragElement;
+                document.ontouchmove = elementDrag;
                 el.classList.add("dragged");
                 label.form.classList.add("active");
             }
@@ -201,6 +204,8 @@
             function closeDragElement() {
                 document.onmouseup = null;
                 document.onmousemove = null;
+                document.ontouchend = null;
+                document.ontouchmove = null;
                 label.form.classList.remove("active");
                 el.classList.remove("dragged");
                 if (elementOffParent(el)) {
