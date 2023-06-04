@@ -170,11 +170,21 @@
             el.onmousedown = dragMouseDown;
             el.ontouchstart = dragMouseDown;
 
+            function clientPos(e) {
+                if (e.type.startsWith('touch')) {
+                    let touch = e.changedTouches[0];
+                    return { 'x': touch.clientX, 'y': touch.clientY };
+                } else {
+                    return { 'x': e.clientX, 'y': e.clientY };
+                }
+            }
+
             function dragMouseDown(e) {
                 e = e || window.event;
                 e.preventDefault();
-                startX = e.clientX;
-                startY = e.clientY;
+                let pos = clientPos(e);
+                startX = pos.x;
+                startY = pos.y;
                 document.onmouseup = closeDragElement;
                 document.onmousemove = elementDrag;
                 document.ontouchend = closeDragElement;
@@ -186,8 +196,9 @@
             function elementDrag(e) {
                 e = e || window.event;
                 e.preventDefault();
-                posX = startX - e.clientX;
-                poxY = startY - e.clientY;
+                let pos = clientPos(e);
+                posX = startX - pos.x;
+                poxY = startY - pos.y;
                 startX = e.clientX;
                 startY = e.clientY;
                 el.style.top = clamp((el.offsetTop - poxY) * 100 / el.parentElement.clientHeight, -5, 105) + "%";
