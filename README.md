@@ -1,16 +1,23 @@
 # ColorCodingDesigner
 Small Javascript application supporting color coding design for a set of labels.
 
+[Try it!](https://bajron.github.io/ColorCodingDesigner/)
+
 Idea
 ---
-You can move your category labels on the color spectrum.
-The color scheme is based on HSL color model.
-What you see on the screen is hue ranging from 0 to 360
-and luminance from 5% to 95%. Saturation is always 100%.
+You can move your category labels on the color spectrum to assign them a color.
+
+The color scheme is based on the HSL color model.
+What you see on the screen is the hue ranging from 0 to 360
+and the luminance from 5% to 95%. Saturation is always 100%.
 
 Features
 ---
-You can add label. It appears roughly in the centre of the spectrum area.
+You can add a label. It appears roughly in the centre of the spectrum area.
+
+You can change the label name in the label list below the rainbow area.
+Color can be assigned by a color picker as well,
+but the choice is mapped to the limited HSL range mentioned above.
 
 You can sort your labels with respect to the hue values.
 
