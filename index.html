@@ -22,6 +22,7 @@
             width: 90%;
             height: 50%;
             min-width: 360px;
+            max-height: 400px;
             background-color: black;
             border: 1px solid black;
             box-shadow: 0px 0px 80px black;
@@ -164,7 +165,7 @@
         }
         // https://www.w3schools.com/howto/howto_js_draggable.asp
         function dragElement(el, labelId) {
-            var posX = 0, poxY = 0, startX = 0, startY = 0;
+            var posX = 0, posY = 0, startX = 0, startY = 0;
             var label = labels.get(labelId);
 
             el.onmousedown = dragMouseDown;
@@ -173,7 +174,7 @@
             function clientPos(e) {
                 if (e.type.startsWith('touch')) {
                     let touch = e.changedTouches[0];
-                    return { 'x': touch.clientX, 'y': touch.clientY };
+                    return { 'x': Math.round(touch.clientX), 'y': Math.round(touch.clientY) };
                 } else {
                     return { 'x': e.clientX, 'y': e.clientY };
                 }
@@ -195,13 +196,12 @@
 
             function elementDrag(e) {
                 e = e || window.event;
-                e.preventDefault();
                 let pos = clientPos(e);
                 posX = startX - pos.x;
-                poxY = startY - pos.y;
-                startX = e.clientX;
-                startY = e.clientY;
-                el.style.top = clamp((el.offsetTop - poxY) * 100 / el.parentElement.clientHeight, -5, 105) + "%";
+                posY = startY - pos.y;
+                startX = pos.x;
+                startY = pos.y;
+                el.style.top = clamp((el.offsetTop - posY) * 100 / el.parentElement.clientHeight, -5, 105) + "%";
                 el.style.left = clamp((el.offsetLeft - posX) * 100 / el.parentElement.clientWidth, -5, 105) + "%";
                 if (elementOffParent(el)) {
                     label.form.classList.add("doomed");
