@@ -599,7 +599,8 @@
             </svg>
         </div>
     </div>
-    <form id="label-list">
+    <form id="label-list" onsubmit="return false;">
+        <input type="submit" disabled style="display: none" aria-hidden="true" />
         <fieldset id="control-bar">
             <input type="button" name="add-button" id="add-button" value="Add" />
             <input type="button" name="sort-button" id="sort-button" value="Sort" />
