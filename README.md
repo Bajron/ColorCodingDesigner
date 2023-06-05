@@ -15,8 +15,13 @@ Features
 ---
 You can add a label. It appears roughly in the centre of the spectrum area.
 
+Double click on the design area adds a label.
+
+A click on the label starts editing of the corresponding text field.
+When a label text is edited it is highlighted on the visualization area.
+
 You can change the label name in the label list below the rainbow area.
-Color can be assigned by a color picker as well,
+Color can be assigned by a color picker as well
 but the choice is mapped to the limited HSL range mentioned above.
 
 You can sort your labels with respect to the hue values.
@@ -25,7 +30,7 @@ Import and export to files is possible.
 
 Drag a label out of the color area to delete it.
 
-Drag'n'drop input file on the colors area to load it.
+Drag'n'drop input CSV file on the colors area to load it.
 
 Files
 ---
@@ -38,3 +43,6 @@ Labels are stored in the sequence visible on the screen.
 Sort your labels if you want to have them ordered by hue.
 
 Only hex codes are supported in the `.csv` files.
+
+Importing `.csv` with quoted fields is not supported.
+Avoid using `,` (or the separator character in general) in the label names.

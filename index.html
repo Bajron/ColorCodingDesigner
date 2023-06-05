@@ -52,6 +52,7 @@
             z-index: 0;
             position: absolute;
             background: rgba(255, 255, 255, 0.45);
+            border: 1px solid rgba(255, 255, 255, 0.45);
             color: black;
             font-family: monospace;
             padding: 3px;
@@ -70,20 +71,6 @@
             text-overflow: ellipsis;
         }
 
-        .dragged {
-            cursor: grabbing !important;
-        }
-
-        .active {
-            border-color: lime;
-        }
-
-        .doomed {
-            color: red;
-            border-color: red;
-            box-shadow: 0px 0px 16px red;
-        }
-
         .marker {
             border: 2px solid white;
             border-radius: 8px;
@@ -91,8 +78,32 @@
             height: 8px;
             background-color: none;
             position: absolute;
-            top: -6px;
-            left: -6px;
+            top: -7px;
+            left: -7px;
+        }
+
+        .dragged {
+            cursor: grabbing !important;
+        }
+
+        .active {
+            border-color: lime;
+            box-shadow: 0px 0px 16px lime !important;
+        }
+
+        .hover {
+            box-shadow: 0px 0px 16px grey;
+        }
+
+        .selected {
+            border: 1px solid white;
+            box-shadow: 0px 0px 8px white;
+        }
+
+        .doomed {
+            color: red;
+            border-color: red;
+            box-shadow: 0px 0px 16px red !important;
         }
 
         #label-list {
@@ -134,8 +145,8 @@
             background-color: lightgrey;
         }
 
-        #label-list input {
-            height: 2em;
+        input {
+            height: 2.5em;
             vertical-align: middle;
         }
 
@@ -163,29 +174,50 @@
             }
             return "#" + hex(rgb[1]) + hex(rgb[2]) + hex(rgb[3]);
         }
+
+        function clientPos(e) {
+            if (e.type.startsWith('touch')) {
+                let touch = e.changedTouches[0];
+                return { 'x': Math.round(touch.clientX), 'y': Math.round(touch.clientY) };
+            } else {
+                return { 'x': e.clientX, 'y': e.clientY };
+            }
+        }
+
         // https://www.w3schools.com/howto/howto_js_draggable.asp
-        function dragElement(el, labelId) {
-            var posX = 0, posY = 0, startX = 0, startY = 0;
+        function setUpDraggableLabel(el, labelId) {
+            var posX = 0, posY = 0, startX = 0, startY = 0, clickTime = 0;
+            var dragged = false, distance = 0;
             var label = labels.get(labelId);
 
             el.onmousedown = dragMouseDown;
             el.ontouchstart = dragMouseDown;
+            el.onmouseenter = function (e) { label.form.classList.add("hover"); };
+            el.onmouseleave = function (e) { label.form.classList.remove("hover"); };
+            el.onclick = function (e) { giveFocusIfShortClick(); }
 
-            function clientPos(e) {
-                if (e.type.startsWith('touch')) {
-                    let touch = e.changedTouches[0];
-                    return { 'x': Math.round(touch.clientX), 'y': Math.round(touch.clientY) };
-                } else {
-                    return { 'x': e.clientX, 'y': e.clientY };
+            // Must be a short click, or click without dragging.
+            // It is implemented that way to avoid automated scrolling
+            // down to the focused field which might be an issue with many labels added
+            function giveFocusIfShortClick() {
+                if ((Date.now() - clickTime) < 400 && distance < 5 || !dragged) {
+                    label.form.getElementsByClassName("label-name")[0].focus();
                 }
             }
 
             function dragMouseDown(e) {
                 e = e || window.event;
                 e.preventDefault();
+                document.activeElement.blur();
+
+                clickTime = Date.now();
+                dragged = false;
+                distance = 0;
+
                 let pos = clientPos(e);
                 startX = pos.x;
                 startY = pos.y;
+
                 document.onmouseup = closeDragElement;
                 document.onmousemove = elementDrag;
                 document.ontouchend = closeDragElement;
@@ -196,12 +228,14 @@
 
             function elementDrag(e) {
                 e = e || window.event;
+                dragged = true;
                 let pos = clientPos(e);
                 posX = startX - pos.x;
                 posY = startY - pos.y;
+                distance += Math.abs(posX) + Math.abs(posY);
                 startX = pos.x;
                 startY = pos.y;
-                el.style.top = clamp((el.offsetTop - posY) * 100 / el.parentElement.clientHeight, -5, 105) + "%";
+                el.style.top = clamp((el.offsetTop - posY) * 100 / el.parentElement.clientHeight, -5, 120) + "%";
                 el.style.left = clamp((el.offsetLeft - posX) * 100 / el.parentElement.clientWidth, -5, 105) + "%";
                 if (elementOffParent(el)) {
                     label.form.classList.add("doomed");
@@ -217,8 +251,11 @@
                 document.onmousemove = null;
                 document.ontouchend = null;
                 document.ontouchmove = null;
+
                 label.form.classList.remove("active");
                 el.classList.remove("dragged");
+                giveFocusIfShortClick();
+
                 if (elementOffParent(el)) {
                     deleteLabel(labelId);
                 }
@@ -230,8 +267,8 @@
         }
 
         function elementOffParent(el) {
-            return el.offsetLeft < -25 || el.offsetLeft > el.parentElement.clientWidth
-                || el.offsetTop < -25 || el.offsetTop > el.parentElement.clientHeight;
+            return el.offsetLeft < -5 || el.offsetLeft > (el.parentElement.clientWidth + 4)
+                || el.offsetTop < -5 || el.offsetTop > (el.parentElement.clientHeight + 4);
         }
 
         // https://www.niwa.nu/2013/05/math-behind-colorspace-conversions-rgb-hsl/
@@ -281,6 +318,8 @@
 
             var inputText = label.form.querySelector("input[type=text]");
             inputText.addEventListener("input", textChanged);
+            inputText.addEventListener("focus", function (e) { label.div.classList.add('selected'); });
+            inputText.addEventListener("blur", function (e) { label.div.classList.remove('selected'); });
 
             var inputColor = label.form.querySelector("input[type=color]");
             inputColor.addEventListener("input", colorSet);
@@ -296,7 +335,9 @@
             labelMoved();
 
             function textChanged(e) {
-                label.div.getElementsByTagName("span")[0].textContent = e.target.value;
+                let s = label.div.getElementsByTagName("span")[0];
+                s.textContent = e.target.value;
+                s.setAttribute("title", e.target.value);
             }
             function labelMoved() {
                 var hue = 360 * (label.div.offsetLeft / label.div.parentElement.clientWidth);
@@ -320,15 +361,21 @@
         }
 
         function makeGradient(hue) {
+            const checkpoints = 5;
+            const start = 5;
+            const stop = 95;
+            const w = stop - start;
+            const step = 100 / (checkpoints - 1);
+            const lumStep = w / (checkpoints - 1);
             var g = makeSvg('linearGradient');
             g.setAttribute("id", "g" + hue);
             g.setAttribute("x1", "0%");
             g.setAttribute("x2", "0%");
             g.setAttribute("y1", "0%");
             g.setAttribute("y2", "100%");
-            for (var i = 0; i < 5; ++i) {
-                var percent = (i * 25) + "%";
-                var lum = (5 + i * 18) + "%";
+            for (var i = 0; i < checkpoints; ++i) {
+                var percent = (i * step) + "%";
+                var lum = (start + i * lumStep) + "%";
                 var s = makeSvg('stop');
                 s.setAttribute("offset", percent);
                 s.setAttribute("style", "stop-color:hsl(" + hue + ", 100%, " + lum + ");stop-opacity:1");
@@ -350,17 +397,24 @@
 
         var idSequence = 0;
         var labels = new Map();
-        function makeLabelDiv(text) {
+
+        function makeLabelDiv(text, position) {
             var marker = document.createElement("div");
             marker.classList.add("marker");
             var s0 = document.createElement("span");
             s0.textContent = text;
+            s0.setAttribute("title", text);
             var d0 = document.createElement("div");
             d0.classList.add("label");
             d0.appendChild(marker);
             d0.append(s0);
-            d0.style.top = (60 - Math.random() * 20) + "%";
-            d0.style.left = (60 - Math.random() * 20) + "%";
+            if (position !== undefined && position !== null) {
+                d0.style.top = position.y;
+                d0.style.left = position.x;
+            } else {
+                d0.style.top = (60 - Math.random() * 20) + "%";
+                d0.style.left = (60 - Math.random() * 20) + "%";
+            }
             return d0;
         }
 
@@ -387,13 +441,13 @@
             return fs;
         }
 
-        function addLabel(text, color) {
+        function addLabel(text, color, position) {
             var id = idSequence++;
-            var placeholder = text === undefined ? 'Label#' + id : text;
+            var placeholder = (text === undefined || text === null) ? 'Label#' + id : text;
 
             var label = Object();
             label.id = id;
-            label.div = makeLabelDiv(placeholder);
+            label.div = makeLabelDiv(placeholder, position);
             label.form = makeLabelForm(id, placeholder);
             label.setHexColor = function (hex) {
                 var r = parseInt(hex.substring(1, 3), 16);
@@ -408,10 +462,12 @@
             document.getElementById("vis-area").appendChild(label.div);
             document.getElementById("label-list").appendChild(label.form);
 
-            dragElement(label.div, id);
+            setUpDraggableLabel(label.div, id);
             synchronizedValues(label);
 
-            if (color !== undefined && color[0] == "#") {
+            label.form.getElementsByClassName("label-name")[0].select();
+
+            if (color !== undefined && color !== null && color[0] == "#") {
                 label.setHexColor(color);
             }
             return label;
@@ -446,8 +502,7 @@
             const escapeCsv = function (text) {
                 if (!(text.includes(',') || text.includes('"')))
                     return text;
-                text.replace('"', '""');
-                return '"' + text + '"';
+                return '"' + text.replaceAll('"', '""') + '"';
             };
             var content = 'sep=,\n';
             content += 'label,color\n';
@@ -500,7 +555,7 @@
             }
         }
 
-        function setUpVisualizationAreaAsDraggable() {
+        function setUpVisualizationAreaAsDroppable() {
             var depth = 0;
             let space = document.getElementById("vis-area");
             space.addEventListener("dragenter", dragEnter);
@@ -564,6 +619,13 @@
         window.addEventListener("load", function () {
             buildColorSpace();
 
+            const visArea = document.getElementById("vis-area");
+            visArea.ondblclick = function (e) {
+                let pos = clientPos(e);
+                pos.x = 100 * ((pos.x - visArea.offsetLeft) / visArea.clientWidth) + "%";
+                pos.y = 100 * ((pos.y - visArea.offsetTop) / visArea.clientHeight) + "%";
+                addLabel(null, null, pos);
+            };
             document.getElementById("add-button").onclick = function (e) { addLabel(); };
             document.getElementById("sort-button").onclick = function (e) { sortByHue(); };
             document.getElementById("download-button").onclick = function (e) { createCsv(); };
@@ -577,7 +639,7 @@
                 e.preventDefault();
             }, false);
 
-            setUpVisualizationAreaAsDraggable();
+            setUpVisualizationAreaAsDroppable();
 
             const urlParams = new URLSearchParams(window.location.search);
             const isTest = urlParams.get('test');
